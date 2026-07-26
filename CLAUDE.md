@@ -8,7 +8,7 @@ Trip-specific context baked into the system prompt: home base is Notting Hill (n
 
 - **Backend:** Node.js (ESM) + Express 5, Anthropic SDK with `web_search` tool, in-memory job store.
 - **Frontend:** single `index.html` with inlined CSS + vanilla JS. No build step, no framework.
-- **Hosting:** Railway. Auto-deploys on push to `main` of the GitHub repo (see Deploy section — repo + Railway URL TBD once Julia creates them). Mirrors the NYC-planner setup exactly.
+- **Hosting:** Railway. Auto-deploys on push to `main` of `github.com/Russiacal/London-planner` (HTTPS remote, not SSH — matches NYC-planner). Production URL: <https://london-planner-production.up.railway.app/>.
 
 ## Run locally
 
@@ -58,7 +58,7 @@ Trade-offs of this design:
 `git push origin main` → Railway picks it up, redeploy takes 1–3 minutes. To verify a deploy is live, hit the URL directly with curl — much faster than trying it in a browser:
 
 ```
-curl -i -X POST https://<your-railway-subdomain>.up.railway.app/plan \
+curl -i -X POST https://london-planner-production.up.railway.app/plan \
   -H "Content-Type: application/json" \
   -d '{"day":"1","neighborhood":"Notting Hill (home base)"}'
 ```
