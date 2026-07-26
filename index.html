@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>London Family Planner 🇬🇧</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #faf7f2;
+      --ink: #1a1510;
+      --rust: #c95f2e;
+      --gold: #d4a843;
+      --sage: #7a9e7e;
+      --mist: #e8e2d9;
+      --white: #ffffff;
+      --shadow: rgba(26,21,16,0.12);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    header {
+      background: var(--ink);
+      color: var(--cream);
+      padding: 2rem 2rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg, transparent, transparent 40px,
+        rgba(212,168,67,0.04) 40px, rgba(212,168,67,0.04) 41px
+      );
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      letter-spacing: -0.02em;
+      position: relative;
+    }
+    header h1 em { font-style: italic; color: var(--gold); }
+    header p {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      font-weight: 300;
+      opacity: 0.7;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      position: relative;
+    }
+
+    main {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Controls ── */
+    .controls {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.8rem;
+      box-shadow: 0 4px 24px var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .controls h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 1.4rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    @media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--rust);
+      margin-bottom: 0.45rem;
+    }
+    select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 2px solid var(--mist);
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      background: var(--cream);
+      color: var(--ink);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c95f2e' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    select:focus { outline: none; border-color: var(--rust); }
+
+    .generate-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--rust);
+      color: var(--white);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-style: italic;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .generate-btn:hover { background: #b04e22; }
+    .generate-btn:active { transform: scale(0.98); }
+    .generate-btn:disabled { background: #c0a090; cursor: not-allowed; }
+
+    /* ── Day header ── */
+    .day-header { display: none; margin-bottom: 1.5rem; }
+    .day-header.visible { display: block; }
+    .day-header h2 { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-style: italic; }
+    .day-header h2 span { color: var(--rust); }
+    .day-header p { font-size: 0.85rem; opacity: 0.6; margin-top: 0.2rem; letter-spacing: 0.04em; text-transform: uppercase; }
+
+    /* ── Summary bar ── */
+    #summary-bar {
+      display: none;
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.2rem 1.5rem;
+      box-shadow: 0 4px 24px var(--shadow);
+      margin-bottom: 1.5rem;
+    }
+    #summary-bar.visible { display: block; }
+    #summary-bar h3 {
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 0.8rem;
+    }
+    .summary-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.1s, opacity 0.2s;
+      text-decoration: none;
+      background: var(--mist);
+      color: var(--ink);
+    }
+    .summary-chip:hover { transform: translateY(-1px); opacity: 0.85; }
+    .summary-chip .chip-count {
+      background: rgba(0,0,0,0.15);
+      border-radius: 10px;
+      padding: 0.05rem 0.4rem;
+      font-size: 0.72rem;
+    }
+
+    /* type colours — chips */
+    .chip-Museum      { background: #e8d5f5; color: #5b2d8e; }
+    .chip-Playground  { background: #d5f0e8; color: #1a6e4a; }
+    .chip-Library     { background: #fde8d5; color: #8e4a1a; }
+    .chip-Park        { background: #d5edd8; color: #2d6b33; }
+    .chip-Restaurant  { background: #fde8d5; color: #8e4a1a; }
+    .chip-Cafe        { background: #f5f0d5; color: #6e5a1a; }
+    .chip-Market      { background: #d5e8f5; color: #1a4a8e; }
+    .chip-Event       { background: #f5d5e8; color: #8e1a5a; }
+    .chip-Bakery      { background: #f9e8d0; color: #7a3a10; }
+    .chip-ToyStore    { background: #fce8f5; color: #7a1a6e; }
+    .chip-Other       { background: var(--mist); color: var(--ink); }
+
+    /* ── Group headings ── */
+    .type-group-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--ink);
+      margin: 2rem 0 0.8rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--mist);
+      scroll-margin-top: 1.5rem;
+    }
+
+    /* ── Activity cards ── */
+    #cards-container { display: flex; flex-direction: column; gap: 0; }
+
+    .activity-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+      box-shadow: 0 2px 12px var(--shadow);
+      margin-bottom: 0.9rem;
+      border-left: 4px solid transparent;
+      scroll-margin-top: 1.5rem;
+      transition: opacity 0.3s;
+    }
+    .activity-card.done { opacity: 0.45; border-left-color: var(--sage); }
+    .activity-card.done .card-name { text-decoration: line-through; }
+
+    .card-top-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.9rem;
+    }
+    .card-check {
+      margin-top: 3px;
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      border: 2px solid var(--mist);
+      border-radius: 5px;
+      cursor: pointer;
+      appearance: none;
+      transition: background 0.2s, border-color 0.2s;
+      background: var(--cream);
+    }
+    .card-check:checked {
+      background: var(--sage);
+      border-color: var(--sage);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='10' viewBox='0 0 12 10'%3E%3Cpath d='M1 5l3.5 3.5L11 1' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .card-main { flex: 1; min-width: 0; }
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      cursor: pointer;
+      user-select: none;
+    }
+    .card-title-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .card-type {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 0.18rem 0.5rem;
+      border-radius: 20px;
+      background: var(--mist);
+      color: var(--ink);
+    }
+    .card-type.Museum      { background: #e8d5f5; color: #5b2d8e; }
+    .card-type.Playground  { background: #d5f0e8; color: #1a6e4a; }
+    .card-type.Library     { background: #fde8d5; color: #8e4a1a; }
+    .card-type.Park        { background: #d5edd8; color: #2d6b33; }
+    .card-type.Restaurant  { background: #fde8d5; color: #8e4a1a; }
+    .card-type.Cafe        { background: #f5f0d5; color: #6e5a1a; }
+    .card-type.Market      { background: #d5e8f5; color: #1a4a8e; }
+    .card-type.Event       { background: #f5d5e8; color: #8e1a5a; }
+    .card-type.Bakery      { background: #f9e8d0; color: #7a3a10; }
+    .card-type.ToyStore    { background: #fce8f5; color: #7a1a6e; }
+
+    .toggle-icon {
+      font-size: 0.75rem;
+      color: #aaa;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle-icon.open { transform: rotate(180deg); }
+
+    .card-address {
+      font-size: 0.78rem;
+      color: var(--rust);
+      margin-top: 0.3rem;
+      font-weight: 500;
+    }
+
+    /* collapsible body */
+    .card-details {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.3s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .card-details.open {
+      max-height: 300px;
+      opacity: 1;
+    }
+    .card-desc {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      margin-top: 0.7rem;
+      color: #333;
+    }
+    .card-tips {
+      font-size: 0.8rem;
+      color: #666;
+      font-style: italic;
+      line-height: 1.5;
+      border-top: 1px solid var(--mist);
+      padding-top: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .card-tips::before { content: '💡 '; }
+
+    /* ── Map button ── */
+    .map-section { display: none; margin-top: 2rem; }
+    .map-section.visible { display: block; }
+    .map-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.4rem;
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .map-btn:hover { background: #333; }
+
+    /* ── Spinner ── */
+    .spinner { display: none; text-align: center; padding: 2rem; color: #888; font-size: 0.9rem; }
+    .spinner.visible { display: block; }
+    .spinner::before {
+      content: '🗽';
+      display: block;
+      font-size: 2.5rem;
+      animation: bounce 1s ease-in-out infinite;
+      margin-bottom: 0.8rem;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .reset-link { display: none; margin-top: 1rem; text-align: center; font-size: 0.82rem; color: #999; cursor: pointer; text-decoration: underline; }
+    .reset-link.visible { display: block; }
+
+    #streaming-box {
+      display: none;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem 1.8rem;
+      box-shadow: 0 4px 24px var(--shadow);
+      margin-bottom: 1.5rem;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      color: #555;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>London <em>Family</em> Planner</h1>
+  <p>July 27 – Aug 2, 2026 · Notting Hill Base · 17 months old</p>
+</header>
+
+<main>
+  <div class="controls">
+    <h2>What are you planning?</h2>
+    <div class="form-row">
+      <div>
+        <label for="day-select">Trip Day</label>
+        <select id="day-select">
+          <option value="">— pick a day —</option>
+        </select>
+      </div>
+      <div>
+        <label for="neighborhood-select">Neighborhood</label>
+        <select id="neighborhood-select">
+          <option value="">— pick a neighborhood —</option>
+          <option>Notting Hill (home base)</option>
+          <option>Kensington Gardens & Hyde Park</option>
+          <option>South Kensington (museums)</option>
+          <option>Marylebone</option>
+          <option>Regent's Park & Primrose Hill</option>
+          <option>Bloomsbury</option>
+          <option>Covent Garden</option>
+          <option>Soho</option>
+          <option>Westminster & St James's Park</option>
+          <option>South Bank</option>
+          <option>Borough & Bermondsey</option>
+          <option>Shoreditch</option>
+          <option>Greenwich</option>
+          <option>Hampstead & Hampstead Heath</option>
+          <option>Chelsea</option>
+          <option>Little Venice & Paddington</option>
+          <option>Camden</option>
+          <option>Richmond</option>
+        </select>
+      </div>
+    </div>
+    <button class="generate-btn" id="gen-btn" onclick="generatePlan()">Find activities →</button>
+  </div>
+
+  <div class="day-header" id="day-header">
+    <h2>Day <span id="hdr-day"></span> — <span id="hdr-neighborhood"></span></h2>
+    <p id="hdr-date"></p>
+  </div>
+
+  <!-- Summary bar -->
+  <div id="summary-bar">
+    <h3>Activities by type</h3>
+    <div class="summary-chips" id="summary-chips"></div>
+  </div>
+
+  <div class="spinner" id="spinner">Finding the best spots…</div>
+  <div id="streaming-box"></div>
+  <div id="cards-container"></div>
+
+  <div class="map-section" id="map-section">
+    <a class="map-btn" id="map-btn" href="#" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Open all spots in Google Maps
+    </a>
+  </div>
+
+  <p class="reset-link" id="reset-link" onclick="clearResults()">Clear results and start over</p>
+</main>
+
+<script>
+// ── Trip day lookup (matches server) ─────────────────────────────────────────
+const TRIP_DAYS = {
+  1: { date: "Monday, July 27, 2026",     dayOfWeek: "Monday"    },
+  2: { date: "Tuesday, July 28, 2026",    dayOfWeek: "Tuesday"   },
+  3: { date: "Wednesday, July 29, 2026",  dayOfWeek: "Wednesday" },
+  4: { date: "Thursday, July 30, 2026",   dayOfWeek: "Thursday"  },
+  5: { date: "Friday, July 31, 2026",     dayOfWeek: "Friday"    },
+  6: { date: "Saturday, August 1, 2026",  dayOfWeek: "Saturday"  },
+  7: { date: "Sunday, August 2, 2026",    dayOfWeek: "Sunday"    },
+};
+
+// Populate day dropdown
+const daySelect = document.getElementById("day-select");
+Object.entries(TRIP_DAYS).forEach(([num, info]) => {
+  const opt = document.createElement("option");
+  opt.value = num;
+  opt.textContent = `Day ${num} — ${info.date}`;
+  daySelect.appendChild(opt);
+});
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentDay = null;
+let currentNeighborhood = null;
+let doneSet = new Set();
+
+function storageKey(day, neighborhood) {
+  return `london-done-${day}-${neighborhood.replace(/\s+/g, "-")}`;
+}
+function getDoneSet(day, neighborhood) {
+  try { return new Set(JSON.parse(localStorage.getItem(storageKey(day, neighborhood)) || "[]")); }
+  catch { return new Set(); }
+}
+function saveDoneSet(day, neighborhood, set) {
+  localStorage.setItem(storageKey(day, neighborhood), JSON.stringify([...set]));
+}
+
+function el(id) { return document.getElementById(id); }
+function show(id) { el(id).classList.add("visible"); }
+function hide(id) { el(id).classList.remove("visible"); }
+
+function clearResults() {
+  el("cards-container").innerHTML = "";
+  el("summary-chips").innerHTML = "";
+  el("streaming-box").style.display = "none";
+  el("streaming-box").textContent = "";
+  el("summary-bar").style.display = "none";
+  hide("day-header");
+  hide("map-section");
+  hide("reset-link");
+  el("spinner").classList.remove("visible");
+}
+
+// ── Parse streaming text ──────────────────────────────────────────────────────
+function parseActivities(text) {
+  const activities = [];
+  const blocks = text.split(/\n\*{0,2}ACTIVITY:\*{0,2}/);
+  for (let i = 1; i < blocks.length; i++) {
+    const block = blocks[i];
+    const get = (field) => {
+  const m = block.match(new RegExp(`\\*{0,2}${field}:\\*{0,2}\\s*([^\\n]+)`));
+      return m ? m[1].trim() : "";
+    };
+    const descMatch = block.match(/\*{0,2}DESCRIPTION:\*{0,2}\s*([\s\S]*?)(?=\n\*{0,2}TIPS:|$)/);
+const tipsMatch = block.match(/\*{0,2}TIPS:\*{0,2}\s*([\s\S]*?)(?=\n\*{0,2}ACTIVITY:|MAPLOCATIONS:|$)/);
+    activities.push({
+      name: block.split("\n")[0].trim(),
+      type: get("TYPE"),
+      address: get("ADDRESS"),
+      description: descMatch ? descMatch[1].trim() : "",
+      tips: tipsMatch ? tipsMatch[1].trim() : "",
+    });
+  }
+  return activities;
+}
+
+function parseMapLocations(text) {
+  const m = text.match(/MAPLOCATIONS:\s*(.+)/);
+  if (!m) return [];
+  return m[1].split("|").map(s => s.trim()).filter(Boolean);
+}
+
+// ── Type helpers ──────────────────────────────────────────────────────────────
+function typeClass(type) {
+  return (type || "Other").replace(/\s+/g, "").replace(/[^a-zA-Z]/g, "");
+}
+
+function typeEmoji(type) {
+  const map = {
+    Museum: "🏛️", Playground: "🛝", Library: "📚", Park: "🌳",
+    Restaurant: "🍽️", Cafe: "☕", Market: "🛒", Event: "🎉",
+    "Toy Store": "🧸", Bakery: "🥐", Other: "📍"
+  };
+  return map[type] || "📍";
+}
+
+// ── Build summary bar ─────────────────────────────────────────────────────────
+function buildSummary(activities) {
+  // Count by type and record first card id for anchor
+  const typeMap = {};
+  activities.forEach((act, i) => {
+    const t = act.type || "Other";
+    if (!typeMap[t]) typeMap[t] = { count: 0, firstId: `card-${i}` };
+    typeMap[t].count++;
+  });
+
+  const chipsEl = el("summary-chips");
+  chipsEl.innerHTML = "";
+  Object.entries(typeMap).forEach(([type, info]) => {
+    const chip = document.createElement("a");
+    chip.href = `#${info.firstId}`;
+    chip.className = `summary-chip chip-${typeClass(type)}`;
+    chip.innerHTML = `${typeEmoji(type)} ${type} <span class="chip-count">${info.count}</span>`;
+    chipsEl.appendChild(chip);
+  });
+
+  el("summary-bar").style.display = "block";
+}
+
+// ── Render cards grouped by type ──────────────────────────────────────────────
+function renderCards(activities) {
+  const container = el("cards-container");
+  container.innerHTML = "";
+
+  // Group activities by type, preserving order of first appearance
+  const typeOrder = [];
+  const groups = {};
+  activities.forEach((act, i) => {
+    const t = act.type || "Other";
+    if (!groups[t]) { groups[t] = []; typeOrder.push(t); }
+    groups[t].push({ act, i });
+  });
+
+  typeOrder.forEach(type => {
+    // Group heading with anchor
+    const heading = document.createElement("h2");
+    heading.className = "type-group-heading";
+    heading.id = `group-${typeClass(type)}`;
+    heading.textContent = `${typeEmoji(type)} ${type}`;
+    container.appendChild(heading);
+
+    groups[type].forEach(({ act, i }) => {
+      container.appendChild(renderCard(act, i));
+    });
+  });
+}
+
+function renderCard(activity, index) {
+  const card = document.createElement("div");
+  card.className = "activity-card";
+  card.id = `card-${index}`;
+  card.dataset.index = index;
+
+  const isDone = doneSet.has(String(index));
+  if (isDone) card.classList.add("done");
+
+  const tc = typeClass(activity.type);
+
+  card.innerHTML = `
+    <div class="card-top-row">
+      <input type="checkbox" class="card-check" ${isDone ? "checked" : ""} onchange="toggleDone(${index}, this)" />
+      <div class="card-main">
+        <div class="card-title-row" onclick="toggleCard(${index})">
+          <div class="card-title-left">
+            <span class="card-name">${escHtml(activity.name)}</span>
+            <span class="card-type ${tc}">${escHtml(activity.type || "Other")}</span>
+          </div>
+          <span class="toggle-icon" id="icon-${index}">▼</span>
+        </div>
+        ${activity.address ? `<div class="card-address">📍 ${escHtml(activity.address)}</div>` : ""}
+        <div class="card-details" id="details-${index}">
+          ${activity.description ? `<div class="card-desc">${escHtml(activity.description)}</div>` : ""}
+          ${activity.tips ? `<div class="card-tips">${escHtml(activity.tips)}</div>` : ""}
+        </div>
+      </div>
+    </div>
+  `;
+  return card;
+}
+
+function toggleCard(index) {
+  const details = el(`details-${index}`);
+  const icon = el(`icon-${index}`);
+  const isOpen = details.classList.contains("open");
+  details.classList.toggle("open", !isOpen);
+  icon.classList.toggle("open", !isOpen);
+}
+
+function toggleDone(index, checkbox) {
+  const card = document.querySelector(`.activity-card[data-index="${index}"]`);
+  if (checkbox.checked) {
+    doneSet.add(String(index));
+    card.classList.add("done");
+  } else {
+    doneSet.delete(String(index));
+    card.classList.remove("done");
+  }
+  saveDoneSet(currentDay, currentNeighborhood, doneSet);
+}
+
+function escHtml(str) {
+  return String(str || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ── Generate ──────────────────────────────────────────────────────────────────
+async function generatePlan() {
+  const day = daySelect.value;
+  const neighborhood = el("neighborhood-select").value;
+
+  if (!day || !neighborhood) {
+    alert("Please pick both a day and a neighborhood!");
+    return;
+  }
+
+  currentDay = day;
+  currentNeighborhood = neighborhood;
+  doneSet = getDoneSet(day, neighborhood);
+
+  clearResults();
+
+  const info = TRIP_DAYS[parseInt(day)];
+  el("hdr-day").textContent = day;
+  el("hdr-neighborhood").textContent = neighborhood;
+  el("hdr-date").textContent = info.date;
+  show("day-header");
+
+  el("spinner").classList.add("visible");
+
+  const btn = el("gen-btn");
+  btn.disabled = true;
+  btn.textContent = "Finding activities…";
+
+  const streamBox = el("streaming-box");
+  streamBox.style.display = "none";
+  streamBox.textContent = "";
+
+  try {
+    const startResp = await fetch("/plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ day, neighborhood }),
+    });
+
+    if (!startResp.ok) {
+      const errData = await startResp.json().catch(() => ({}));
+      throw new Error(errData.error || `Server returned ${startResp.status}`);
+    }
+
+    const { jobId } = await startResp.json();
+    if (!jobId) throw new Error("Server did not return a job id");
+
+    let fullText = "";
+    const maxAttempts = 90; // 90 * 2s = 3 minutes
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const pollResp = await fetch(`/plan/${jobId}`);
+      if (!pollResp.ok) {
+        throw new Error(`Server returned ${pollResp.status}`);
+      }
+      const job = await pollResp.json();
+      if (job.status === "done") {
+        fullText = job.text || "";
+        break;
+      }
+      if (job.status === "error") {
+        throw new Error(job.error || "Job failed");
+      }
+    }
+
+    if (!fullText) {
+      throw new Error("Timed out waiting for response");
+    }
+
+    el("spinner").classList.remove("visible");
+
+    const activities = parseActivities(fullText);
+    const mapLocations = parseMapLocations(fullText);
+
+    if (activities.length === 0) {
+      streamBox.style.display = "block";
+      streamBox.textContent = fullText || "No activities returned. Try a different day or neighborhood.";
+    } else {
+      buildSummary(activities);
+      renderCards(activities);
+    }
+
+    if (mapLocations.length > 0) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapLocations.join(", ") + " London, UK")}`;
+      el("map-btn").href = url;
+      show("map-section");
+    }
+
+    show("reset-link");
+
+  } catch (err) {
+    el("spinner").classList.remove("visible");
+    streamBox.style.display = "block";
+    streamBox.textContent = "Something went wrong: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Find activities →";
+  }
+}
+</script>
+</body>
+</html>
